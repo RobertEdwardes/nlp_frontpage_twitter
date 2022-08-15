@@ -37,8 +37,8 @@ def unescapematch(matchobj):
 def processed_feature(text, pos_clean=True):
     
     # Removing URLS
-    processed_feature = re.sub(r'https?:\S+', '', text)
-    processed_feature = re.sub(r'^(.+?).\s', '', processed_feature)
+    processed_feature = re.sub(r'https?:\S+', ' ', text)
+    processed_feature = re.sub(r'^(.+?).\s', ' ', processed_feature)
     # Remove all the special characters
     processed_feature = re.sub(r'\W', ' ', processed_feature)
     # Substituting multiple spaces with single space
@@ -98,11 +98,16 @@ def create_bag_of_phrases(text, n_gram_range=(2,3), stop_words=stop_words):
     bag_of_phrases_out = []
     for i in range(len(bag_of_phrases)):
         if text[0].lower().find(bag_of_phrases[i]) > 0:
-            tokens = nltk.word_tokenize(bag_of_phrases[i])
-            tag = nltk.pos_tag(tokens)
-            if tag[-1][1] != 'JJ' and tag[-1][1] != 'JJR'and tag[-1][1] != 'JJS': 
-                bag_of_phrases_out.append(bag_of_phrases[i])
-    return bag_of_phrases
+            #if not re.match('[^\D+\d]|[^\d+]',bag_of_phrases[i]):
+            tag = nltk.pos_tag(bag_of_phrases[i])
+            grammar  = 'CHUNK: {<N.*><V.*>}'
+            cp = nltk.RegexpParser(grammar)
+            result = cp.parse(tag)
+            for subtree in result.subtrees():
+                if subtree.label() == 'CHUNK': 
+                    bag_of_phrases_out.append(bag_of_phrases[i])
+                    continue
+    return bag_of_phrases_out
 
 def vadar(text):
     out_put={'neg':None,
